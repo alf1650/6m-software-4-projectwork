@@ -32,7 +32,7 @@ jobs:
       - checkout
       - docker/check
       - docker/build:
-          image: alf1650/software-4-projectwork
+          image: alf1650/software-4-projectwork # update to own docker
           tag: <<pipeline.git.tag>>
       - docker/push:
           image: alf1650/software-4-projectwork
