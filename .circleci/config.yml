@@ -52,6 +52,7 @@ jobs:
           docker-image-name: $IMAGE_NAME
           severity-threshold: high  # Adjust the severity threshold as needed
           fail-on-issues: false
+          monitor-on-build: true
 
   deploy:
     docker:
