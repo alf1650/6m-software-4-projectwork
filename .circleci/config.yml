@@ -80,19 +80,19 @@ workflows:
       - build:
           filters:
             branches:
-              only: develop
+              only: feature3
       - test:
           requires:
             - build
           filters:
             branches:
-              only: develop
+              only: feature3
       - build-and-push:
           requires:
             - test
           filters:
             branches:
-              only: develop
+              only: feature3
       - scan:
           requires:
             - build
