@@ -80,22 +80,22 @@ workflows:
       - build:
           filters:
             branches:
-              only: develop
+              only: feature4
       - test:
           requires:
             - build
           filters:
             branches:
-              only: develop
-      - build-and-push:
-          requires:
-            - test
-          filters:
-            branches:
-              only: develop
-      - scan:
-          requires:
-            - build
+              only: feature4
+      # - build-and-push:
+      #     requires:
+      #       - test
+      #     filters:
+      #       branches:
+      #         only: develop
+      # - scan:
+      #     requires:
+      #       - build
 
   cicd_flow:
     jobs:
