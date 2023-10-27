@@ -89,7 +89,7 @@ public class PlayerControllerTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(6))
         .andExpect(jsonPath("$.firstName").value("Alfred"))
-        .andExpect(jsonPath("$.lastName").value("Lim"));
+        .andExpect(jsonPath("$.lastName").value("Lim1"));
   }
 
   @Test
