@@ -74,7 +74,7 @@ public class PlayerController {
     }
 
     public static void main(String[] args) {
-        logger.info("🟢 Starting Soccer Stats API");
+        logger.info("🟢 Starting Soccer Stats APII");
         logger.debug("❓ An exception occurred");
         logger.warn("🟠 Test Warning");
         logger.error("🔴 Error Warning");
