@@ -1,58 +1,80 @@
 version: 2.1
-
 orbs:
-  maven: circleci/maven@1.4.1
+  node: circleci/maven@1.4.1
   docker: circleci/docker@2.1.4
   heroku: circleci/heroku@2.0.0
-  snyk: circleci/snyk@0.0.7
+  snyk: snyk/snyk@1.5.0
 
 jobs:
   build:
-    executor: maven/default
-    steps:
-      - checkout
-      - run: mvn clean install
-
-  test:
-    executor: maven/default
-    steps:
-      - checkout
-      - run: mvn test
-
-  snyk_scan:
     docker:
-      - image: snyk/snyk-cli:latest
+      - image: cimg/openjdk:17.0.8
     steps:
       - checkout
       - run:
-          name: Snyk Scan
-          command: snyk test
-        # Fail if vulnerabilities are found
-        when: on_fail
+          name: Build Maven Project
+          command: mvn install
 
-  docker_build:
-    executor: docker/default
+
+  test:
+    docker:
+      - image: cimg/openjdk:17.0.8
+    steps:
+      - checkout
+      - run:
+          name: Test Maven Project 
+          command: mvn test
+
+  build-and-push:
+    executor: docker/docker
     steps:
       - setup_remote_docker
       - checkout
-      - run:
-          name: Build Docker Image
-          command: docker build -t your-docker-image-name .
+      - docker/check
+      - docker/build:
+          image: alf1650/software-4-projectwork # update to own docker
+          tag: <<pipeline.git.tag>>
+      - docker/push:
+          image: alf1650/software-4-projectwork
+          tag: <<pipeline.git.tag>>
+
+  scan:
+    docker: 
+      - image: cimg/openjdk:17.0.8
+    environment:
+      IMAGE_NAME: alf1650/software-4-projectwork
+    steps: 
+      - checkout
+      - setup_remote_docker
+      - docker/check
+      - run: docker build -t $IMAGE_NAME .
+      - snyk/scan: 
+          docker-image-name: $IMAGE_NAME
+          severity-threshold: high  #  Adjust the severity threshold as needed
+          fail-on-issues: false
+          monitor-on-build: true
 
   deploy:
     docker:
-      - image: openjdk:17.0.8
+      - image: cimg/openjdk:17.0.8
     steps:
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.7
+      - heroku/install
+      - checkout
+      - run:
+          name: Set FORCE_SSL to false on Heroku
+          command: |
+            heroku config:set FORCE_SSL=false -a alf1650
+      
       - run:
           name: Heroku Container Push
           command: |
             heroku container:login
-            heroku container:push web -a getsuki-su-devops
-            heroku container:release web -a getsuki-su-devops
+            heroku container:push web -a alf1650
+            heroku container:release web -a alf1650
 
 workflows:
-  version: 2
   ci_flow:
     jobs:
       - build:
@@ -65,12 +87,15 @@ workflows:
           filters:
             branches:
               only: develop
-      - snyk_scan:
+      - build-and-push:
           requires:
             - test
           filters:
             branches:
               only: develop
+      - scan:
+          requires:
+            - build
 
   cicd_flow:
     jobs:
@@ -84,21 +109,15 @@ workflows:
           filters:
             branches:
               only: release
-      - snyk_scan:
+      - build-and-push:
           requires:
             - test
           filters:
             branches:
               only: release
-      - docker_build:
+      - scan:
           requires:
-            - snyk_scan
-          filters:
-            branches:
-              only: release
+            - build
       - deploy:
           requires:
-            - docker_build
-          filters:
-            branches:
-              only: release
+            - build-and-push
